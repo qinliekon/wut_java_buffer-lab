@@ -67,7 +67,7 @@ public class DataProcessing {
     */
 	public static void inituser() {
 		connectToDB = true;
-		File userStorageFile =new File(USER_STORAGE_PATH);
+		File userStorageFile = new File(USER_STORAGE_PATH);
 		users = new Hashtable<String, AbstractUser>();
 		try {
 			if(!userStorageFile.exists()){
@@ -332,6 +332,11 @@ public class DataProcessing {
                     user = new Browser(name,password, role);    
             }
             users.put(name, user);
+			try {
+				storageUser();
+			} catch (IOException e) {
+				System.err.println("”√ªß¥Ê¥¢“Ï≥££∫" + e.getMessage());
+			}
             return true;
         }
 	}
