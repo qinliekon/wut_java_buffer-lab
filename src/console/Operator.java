@@ -1,6 +1,9 @@
 package console;
 
+import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.Scanner;
 
 public class Operator extends AbstractUser {
@@ -24,7 +27,7 @@ public class Operator extends AbstractUser {
         Scanner s = new Scanner(System.in);
         int flag = 0;
         boolean status = true;
-        String name,psw,role,FileName;
+        String name,psw,role,FileName,id,des,filepath;
 
         while (status) {
             System.out.println("请选择菜单：");
@@ -32,20 +35,63 @@ public class Operator extends AbstractUser {
             s.nextLine();
             switch (flag) {
                 case 1:
-                    System.out.println("上传成功");
+                    System.out.println("请输入文件路径");
+                    filepath = s.nextLine();
+                    System.out.println("请输入文件名：");
+                    FileName = s.nextLine();
+
+                    try {
+                        fileOperate(filepath,uploadpath + FileName);
+                    } catch (IOException e) {
+                        System.err.println("上传失败：" + e.getMessage());
+                    }
+
+                    System.out.println("请输入文件档案号：");
+                    id = s.nextLine();
+                    try {
+                        if (DataProcessing.searchDoc(id) != null) {
+                            System.out.println("该档案号已经存在！");
+                            continue;
+                        }
+                    } catch (SQLException e) {
+                        System.out.println("文件上传失败：" + e.getMessage());
+                        continue;
+                    }
+                    System.out.println("请输入文件描述：");
+                    des = s.nextLine();
+
+
+
+
+                    Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+                    try {
+                        DataProcessing.insertDoc(id, this.getName(), timestamp, des, FileName);
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    System.out.println("上传成功！");
                     break;
                 case 2:
-                    System.out.println("请输入文件名称：");
+                    System.out.println("请输入档案号：");
                     FileName = s.nextLine();
                     try {
                         this.downloadFile(FileName);
                     } catch (IOException e) {
                         System.out.println("文件访问错误：" + e.getMessage());
                         continue;
+                    } catch (SQLException e) {
+                        System.out.println("数据库错误：" +e.getMessage());
+                        continue;
                     }
+                    System.out.println("下载成功！");
                     break;
                 case 3:
-                    System.out.println("档案列表如下：");
+                    try {
+                        this.showFileList();
+                    } catch (SQLException e) {
+                        System.out.println("数据库异常：" + e.getSQLState());
+                    }
                     break;
                 case 4:
                     while (true) {

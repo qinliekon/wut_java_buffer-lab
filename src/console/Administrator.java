@@ -1,5 +1,6 @@
 package console;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Enumeration;
 import java.util.Scanner;
@@ -46,6 +47,11 @@ public class Administrator extends AbstractUser {
                 case 2:
                     System.out.println("请输入删除的用户名");
                     name = s.next();
+                    try {
+                        DataProcessing.deleteUser(name);
+                    } catch (SQLException e) {
+                        System.err.println("删除失败：" + e.getMessage());
+                    }
                 case 3:
                     while (true) {
                         System.out.println("请输入要更改的用户名，修改后的密码和用户类型（Administrator/Operator/Browser）：");
@@ -71,10 +77,25 @@ public class Administrator extends AbstractUser {
                 }
                     break;
                 case 5:
-                    System.out.println("档案下载成功！");
+                    String id;
+                    System.out.println("请输入档案号：");
+                    id = s.nextLine();
+                    try {
+                        this.downloadFile(id);
+                    } catch (SQLException e) {
+                        System.out.println("数据库异常：" + e.getMessage());
+                        continue;
+                    } catch (IOException e) {
+                        System.out.println("io流异常：" + e.getMessage());
+                        continue;
+                    }
                     break;
                 case 6:
-                    System.out.println("档案列表如下：");
+                    try {
+                        this.showFileList();
+                    } catch (SQLException e) {
+                        System.out.println("数据库异常：" + e.getSQLState());
+                    }
                     break;
                 case 7:
                     System.out.println("请输入修改后的密码：");

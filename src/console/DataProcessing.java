@@ -1,9 +1,11 @@
 package console;
 
-import javax.print.Doc;
+import javax.naming.Name;
+import java.io.*;
+import java.sql.SQLException;
 import java.util.Enumeration;
 import java.util.Hashtable;
-import java.sql.*;
+import java.sql.Timestamp;
 
 /**
  * TODO 数据处理类
@@ -15,7 +17,7 @@ public class DataProcessing {
 
 	private static boolean connectToDB=false;
 	
-	static Hashtable<String, AbstractUser > users;
+	static Hashtable<String, AbstractUser> users;
 	static Hashtable<String, Doc> docs;
 
 	static enum ROLE_ENUM {
@@ -43,15 +45,15 @@ public class DataProcessing {
         }
     }
 	static {
-		users = new Hashtable<String, AbstractUser>();
+		users = new Hashtable<String, AbstractUser >();
 		users.put("rose", new Browser("rose","123","browser"));
         users.put("jack", new Operator("jack","123","operator"));
 		users.put("kate", new Administrator("kate","123","administrator"));
 		init();
 		
 		Timestamp timestamp = new Timestamp(System.currentTimeMillis()); 
-		docs = new Hashtable<String,console.Doc>();
-		docs.put("0001",new console.Doc("0001","jack",timestamp,"Doc Source Java","Doc.java"));
+		docs = new Hashtable<String,Doc>();
+		docs.put("0001",new Doc("0001","jack",timestamp,"Doc Source Java","Doc.java"));
 	}
 	
 	/**
@@ -82,6 +84,9 @@ public class DataProcessing {
 		}
 		return null;
 	}
+
+
+
 	
 	/**
 	 * TODO 列出所有档案信息
@@ -117,9 +122,8 @@ public class DataProcessing {
             throw new SQLException("Not Connected to Database");
         }
 		
-		if (docs.containsKey(id)) {
+		if (docs.containsKey(id))
 			return false;
-		}
 		else{
 			doc = new Doc(id,creator,timestamp,description,filename);
 			docs.put(id, doc);
@@ -275,9 +279,4 @@ public class DataProcessing {
 		} 
    }           
 
-	
-	public static void main(String[] args) {		
-
-	}
-	
 }

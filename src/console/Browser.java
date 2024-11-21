@@ -1,6 +1,7 @@
 package console;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Scanner;
 
 public class Browser extends AbstractUser {
@@ -31,18 +32,24 @@ public class Browser extends AbstractUser {
             s.nextLine();
             switch (flag) {
                 case 1:
-                    System.out.println("请输入文件名称：");
+                    System.out.println("请输入档案号：");
                     FileName = s.nextLine();
                     try {
                         this.downloadFile(FileName);
-                    } catch (IOException e) {
+                    } catch (SQLException e) {
                         System.out.println("文件访问错误：" + e.getMessage());
+                        continue;
+                    } catch (IOException e) {
+                        System.out.println("io流错误：" + e.getMessage());
                         continue;
                     }
                     break;
                 case 2:
-                    System.out.println("档案列表如下：");
-                    break;
+                    try {
+                        this.showFileList();
+                    } catch (SQLException e) {
+                        System.out.println("数据库异常：" + e.getSQLState());
+                    }
                 case 3:
                     while (true) {
                         System.out.println("请输入要更改的用户名，修改后的密码和用户类型（Administrator/Operator/Browser）：");
