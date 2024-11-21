@@ -19,9 +19,9 @@ public class DataProcessing {
 
 	private static boolean connectToDB=false;
 
-	public static final String USER_STORAGE_PATH="user.txt";
+	public static final String USER_STORAGE_PATH="C:\\Users\\liekon\\Desktop\\大学\\课程\\大二\\java多线程\\java-buffer\\uploadfile\\user.txt";
 
-	public static final String DCO_STORAGE_PATH="doc.txt";
+	public static final String DCO_STORAGE_PATH="C:\\Users\\liekon\\Desktop\\大学\\课程\\大二\\java多线程\\java-buffer\\uploadfile\\doc.txt";
 
 	static Hashtable<String, AbstractUser> users;
 
