@@ -1,17 +1,12 @@
 package console;
 
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import  java.util.Enumeration;
-import  java.io.BufferedInputStream;
-import  java.io.BufferedOutputStream;
-import  java.io.File;
-import  java.io.FileInputStream;
-import  java.io.FileOutputStream;
-import  java.io.IOException;
 import java.util.Scanner;
 
 /**
@@ -20,7 +15,7 @@ import java.util.Scanner;
  * @author gongjing
  * @date 2016/10/13
  */
-public  abstract  class  AbstractUser {
+public  abstract  class  AbstractUser implements Serializable {
 	private  String name;
 	private  String password;
 	private  String role;
@@ -90,13 +85,13 @@ public  abstract  class  AbstractUser {
 
 	public static void fileOperate(String uploadpath,String downloadpath) throws IOException
 	{
-		File downfile=new File(downloadpath);
-		File upfile=new File(uploadpath);
-		int i,j=0;
-		BufferedInputStream fis=new BufferedInputStream(new FileInputStream(upfile));
-		BufferedOutputStream fos=new BufferedOutputStream(new FileOutputStream(downfile,true));
+		File downfile = new File(downloadpath);
+		File upfile = new File(uploadpath);
+		int i, j=0;
+		BufferedInputStream fis = new BufferedInputStream(new FileInputStream(upfile));
+		BufferedOutputStream fos = new BufferedOutputStream(new FileOutputStream(downfile,true));
 
-		while((i=fis.read())!=-1){
+		while ((i=fis.read())!=-1) {
 			fos.write((byte)i);
 			j++;
 		}

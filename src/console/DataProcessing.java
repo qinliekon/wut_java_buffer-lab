@@ -3,9 +3,11 @@ package console;
 import javax.naming.Name;
 import java.io.*;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.sql.Timestamp;
+import java.util.List;
 
 /**
  * TODO 数据处理类
@@ -16,8 +18,14 @@ import java.sql.Timestamp;
 public class DataProcessing {
 
 	private static boolean connectToDB=false;
-	
+
+	public static final String USER_STORAGE_PATH="user.txt";
+
+	public static final String DCO_STORAGE_PATH="doc.txt";
+
 	static Hashtable<String, AbstractUser> users;
+
+
 	static Hashtable<String, Doc> docs;
 
 	static enum ROLE_ENUM {
@@ -45,15 +53,9 @@ public class DataProcessing {
         }
     }
 	static {
-		users = new Hashtable<String, AbstractUser >();
-		users.put("rose", new Browser("rose","123","browser"));
-        users.put("jack", new Operator("jack","123","operator"));
-		users.put("kate", new Administrator("kate","123","administrator"));
-		init();
+		inituser();
 		
-		Timestamp timestamp = new Timestamp(System.currentTimeMillis()); 
-		docs = new Hashtable<String,Doc>();
-		docs.put("0001",new Doc("0001","jack",timestamp,"Doc Source Java","Doc.java"));
+		initdoc();
 	}
 	
 	/**
@@ -63,8 +65,50 @@ public class DataProcessing {
      * @return void
      * @throws  
     */
-	public static  void init(){
-	    connectToDB = true;
+	public static void inituser() {
+		connectToDB = true;
+		File userStorageFile =new File(USER_STORAGE_PATH);
+		users = new Hashtable<String, AbstractUser>();
+		try {
+			if(!userStorageFile.exists()){
+				users.put("jack", new Operator("jack", "123", "operator"));
+				users.put("rose", new Browser("rose", "123", "browser"));
+				users.put("kate", new Administrator("kate", "123", "administrator"));
+			}
+			else{
+				ObjectInputStream readUser=new ObjectInputStream(new FileInputStream(userStorageFile));
+				List<AbstractUser> userlist=(List<AbstractUser>) readUser.readObject();
+				for (AbstractUser user: userlist) {
+					users.put(user.getName(),user);
+				}
+				readUser.close();
+			}
+		} catch (IOException | ClassNotFoundException e) {
+			System.out.println("错误类型："+e.getMessage());
+		}
+	}
+
+	public static void initdoc() {
+		connectToDB = true;
+		File DocStorageFile =new File(DCO_STORAGE_PATH);
+		docs = new Hashtable<String, Doc>();
+		try {
+			if(!DocStorageFile.exists()){
+				Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+				docs = new Hashtable<String,Doc>();
+				docs.put("0001",new Doc("0001","jack",timestamp,"Doc Source Java","Doc.java"));
+			}
+			else{
+				ObjectInputStream readdoc = new ObjectInputStream(new FileInputStream(DocStorageFile));
+				List<Doc> doclist = (List<Doc>) readdoc.readObject();
+				for (Doc doc: doclist) {
+					docs.put(doc.getId(),doc);
+				}
+				readdoc.close();
+			}
+		} catch (IOException | ClassNotFoundException e) {
+			System.out.println("错误类型："+e.getMessage());
+		}
 	}
 	
 	/**
@@ -87,7 +131,7 @@ public class DataProcessing {
 
 
 
-	
+
 	/**
 	 * TODO 列出所有档案信息
 	 * 
@@ -102,8 +146,8 @@ public class DataProcessing {
 	    
 	    Enumeration<Doc> e  = docs.elements();
 		return e;
-	} 
-	
+	}
+
 	/**
 	 * TODO 插入新的档案
 	 * 
@@ -127,9 +171,51 @@ public class DataProcessing {
 		else{
 			doc = new Doc(id,creator,timestamp,description,filename);
 			docs.put(id, doc);
+			try {
+				storageDoc();
+			} catch (IOException e) {
+				System.err.println("文档存储异常：" + e.getMessage());
+			}
 			return true;
 		}
-	} 
+	}
+
+	public static void storageDoc() throws IOException {
+		File DocStorageFile = new File(DCO_STORAGE_PATH);
+		if(!DocStorageFile.exists()){
+			DocStorageFile.createNewFile();
+		}
+		ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(DocStorageFile));
+		Enumeration<Doc> e = docs.elements();
+		List<Doc> DocList = new ArrayList<>();
+		while(e.hasMoreElements()) {
+			DocList.add(e.nextElement());
+		}
+		out.writeObject(DocList);
+		out.close();
+	}
+
+	/**
+	 * TODO:序列化存储用户
+	 *
+	 * @return void
+	 * @throws IOException
+	 */
+
+	public static void storageUser() throws IOException {
+		File userStorageFile=new File(USER_STORAGE_PATH);
+		if(!userStorageFile.exists()){
+			userStorageFile.createNewFile();
+		}
+		ObjectOutputStream out=new ObjectOutputStream(new FileOutputStream(userStorageFile));
+		Enumeration<AbstractUser> e = users.elements();
+		List<AbstractUser> userlist=new ArrayList<>();
+		while(e.hasMoreElements()) {
+			userlist.add(e.nextElement());
+		}
+		out.writeObject(userlist);
+		out.close();
+	}
 	
 	/**
      * TODO 按用户名搜索用户，返回null时表明未找到符合条件的用户
@@ -144,7 +230,7 @@ public class DataProcessing {
         }
 	    
 	    if (users.containsKey(name)) {
-			return users.get(name);			
+			return users.get(name);
 		}
 		return null;
 	}
@@ -210,6 +296,11 @@ public class DataProcessing {
                     user = new Browser(name,password, role);    
             }
             users.put(name, user);
+			try {
+				storageUser();
+			} catch (IOException e) {
+				System.err.println("用户存储异常：" + e.getMessage());
+			}
             return true;
         }else {
             return false;
