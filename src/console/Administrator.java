@@ -66,7 +66,7 @@ public class Administrator extends AbstractUser {
                     break;
                 case 4:
                     try{
-                        Enumeration e = DataProcessing.listUser();
+                        Enumeration e = DataProcessing.getAllUser();
                         System.out.println("用户名\t\t密码\t\t角色");
                         while (e.hasMoreElements()) {
                             AbstractUser abstractUser = (AbstractUser) e.nextElement();

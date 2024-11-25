@@ -1,378 +1,250 @@
 package console;
 
-import javax.naming.Name;
-import java.io.*;
-import java.sql.SQLException;
-import java.util.ArrayList;
+import java.sql.*;
 import java.util.Enumeration;
 import java.util.Hashtable;
-import java.sql.Timestamp;
-import java.util.List;
 
-/**
- * TODO Êı¾İ´¦ÀíÀà
- *
- * @author gongjing
- * @date 2016/10/13
- */
 public class DataProcessing {
 
-	private static boolean connectToDB=false;
+    private static boolean connectedToDatabase = false;
+    //æ•°æ®è¿æ¥
+    private static Connection connection;
+    //è·å–æ•°æ®åº“æ“ä½œå¯¹è±¡
+    private static Statement statement;
+    //å¤„ç†æŸ¥è¯¢ç»“æœé›†
+    private static ResultSet resultSet;
 
-	public static final String USER_STORAGE_PATH="C:\\Users\\liekon\\Desktop\\´óÑ§\\¿Î³Ì\\´ó¶ş\\java¶àÏß³Ì\\java-buffer\\uploadfile\\user.txt";
-
-	public static final String DCO_STORAGE_PATH="C:\\Users\\liekon\\Desktop\\´óÑ§\\¿Î³Ì\\´ó¶ş\\java¶àÏß³Ì\\java-buffer\\uploadfile\\doc.txt";
-
-	static Hashtable<String, AbstractUser> users;
-
-
-	static Hashtable<String, Doc> docs;
-
-	static enum ROLE_ENUM {
-        /**
-         * administrator
-         */
-        administrator("administrator"), 
-        /**
-         * operator
-         */
-        operator("operator"), 
-        /**
-         * browser
-         */
-        browser("browser");
-        
-        private String role;
-        
-        ROLE_ENUM(String role) {
-            this.role = role;
-        }
-        
-        public String getRole() {
-            return role;
+    public static void connectToDatabase(String driverName, String url, String user, String password)
+            throws SQLException, ClassNotFoundException {
+        // åŠ è½½é©±åŠ¨
+        Class.forName(driverName);
+        // å»ºç«‹æ•°æ®åº“è¿æ¥
+        connection = DriverManager.getConnection(url, user, password);
+        connectedToDatabase = true;
+    }
+    //æ–­å¼€è¿æ¥
+    public static void disconnectFromDatabase() throws SQLException {
+        if (connectedToDatabase) {
+            // é‡Šæ”¾èµ„æº,ä»ååˆ°å‰
+            resultSet.close();
+            statement.close();
+            connection.close();
+            connectedToDatabase = false;
         }
     }
-	static {
-		inituser();
-		
-		initdoc();
-	}
-	
-	/**
-     * TODO ³õÊ¼»¯£¬Á¬½ÓÊı¾İ¿â
-     *   
-     * @param 
-     * @return void
-     * @throws  
-    */
-	public static void inituser() {
-		connectToDB = true;
-		File userStorageFile = new File(USER_STORAGE_PATH);
-		users = new Hashtable<String, AbstractUser>();
-		try {
-			if(!userStorageFile.exists()){
-				users.put("jack", new Operator("jack", "123", "operator"));
-				users.put("rose", new Browser("rose", "123", "browser"));
-				users.put("kate", new Administrator("kate", "123", "administrator"));
-			}
-			else{
-				ObjectInputStream readUser=new ObjectInputStream(new FileInputStream(userStorageFile));
-				List<AbstractUser> userlist=(List<AbstractUser>) readUser.readObject();
-				for (AbstractUser user: userlist) {
-					users.put(user.getName(),user);
-				}
-				readUser.close();
-			}
-		} catch (IOException | ClassNotFoundException e) {
-			System.out.println("´íÎóÀàĞÍ£º"+e.getMessage());
-		}
-	}
 
-	public static void initdoc() {
-		connectToDB = true;
-		File DocStorageFile =new File(DCO_STORAGE_PATH);
-		docs = new Hashtable<String, Doc>();
-		try {
-			if(!DocStorageFile.exists()){
-				Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-				docs = new Hashtable<String,Doc>();
-				docs.put("0001",new Doc("0001","jack",timestamp,"Doc Source Java","Doc.java"));
-			}
-			else{
-				ObjectInputStream readdoc = new ObjectInputStream(new FileInputStream(DocStorageFile));
-				List<Doc> doclist = (List<Doc>) readdoc.readObject();
-				for (Doc doc: doclist) {
-					docs.put(doc.getId(),doc);
-				}
-				readdoc.close();
-			}
-		} catch (IOException | ClassNotFoundException e) {
-			System.out.println("´íÎóÀàĞÍ£º"+e.getMessage());
-		}
-	}
-	
-	/**
-	 * TODO °´µµ°¸±àºÅËÑË÷µµ°¸ĞÅÏ¢£¬·µ»ØnullÊ±±íÃ÷Î´ÕÒµ½
-	 * 
-	 * @param id
-	 * @return Doc
-	 * @throws SQLException 
-	*/
-	public static Doc searchDoc(String id) throws SQLException {
-	    if (!connectToDB) {
-            throw new SQLException("Not Connected to Database");
+    public static Doc searchDoc(String ID) throws SQLException {
+
+        Doc doc = null;
+
+        if (!connectedToDatabase)
+            throw new SQLException("æ•°æ®åº“æœªè¿æ¥ï¼");
+//type_scroll_insensitive_   concur_read_n=only
+        // åˆ›å»ºè¯­å¥å¯¹è±¡
+        statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        // æ‰§è¡ŒSQLè¯­å¥
+        String sql = "select * from doc_info where FileID='" + ID + "'"; // è·å–FileIDåˆ—ä¸­å€¼ä¸ºIDçš„æ•°æ®ï¼Œå˜é‡å‰åç”¨+å’Œ'"ã€"'è¿æ¥
+        // å¤„ç†å¯¹è±¡,æ•°æ®æ“ä½œé›†
+        resultSet = statement.executeQuery(sql);
+        // è·å–æ•°æ®åº“ä¿¡æ¯
+        if (resultSet.next()) {
+
+            String FileID = resultSet.getString("FileID");
+            String Creator = resultSet.getString("Creator");
+            Timestamp timestamp = Timestamp.valueOf(resultSet.getString("Timestamp")); // stringè½¬Timestamp
+            String Description = resultSet.getString("Description");
+            String FileName = resultSet.getString("FileName");
+
+            doc = new Doc(FileID, Creator, timestamp, Description, FileName);
         }
-	    if (docs.containsKey(id)) {
-			Doc temp =docs.get(id);
-			return temp;
-		}
-		return null;
-	}
 
+        return doc;
+    }
 
+    public static boolean insertDoc(String ID, String creator, Timestamp timestamp, String description, String filename)
+            throws SQLException {
 
+        if (!connectedToDatabase)
+            throw new SQLException("æ•°æ®åº“æœªè¿æ¥ï¼");
 
-	/**
-	 * TODO ÁĞ³öËùÓĞµµ°¸ĞÅÏ¢
-	 * 
-	 * @param 
-	 * @return Enumeration<Doc>
-	 * @throws SQLException 
-	*/
-	public static Enumeration<Doc> listDoc() throws SQLException{		
-	    if (!connectToDB) {
-            throw new SQLException("Not Connected to Database");
+        // åˆ›å»ºè¯­å¥å¯¹è±¡
+        statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        // æ‰§è¡ŒSQLè¯­å¥
+        String sql = "INSERT INTO doc_info VALUES('" + ID + "','" + creator + "','" + timestamp + "','" + description
+                + "','" + filename + "')";
+        // æ›´æ–°åˆ—è¡¨
+        statement.executeUpdate(sql);
+
+        return true;
+    }
+
+    public static Enumeration<Doc> getAllDocs() throws SQLException {
+
+        if (!connectedToDatabase)
+            throw new SQLException("æ•°æ®åº“æœªè¿æ¥ï¼");
+
+        // å»ºç«‹å“ˆå¸Œè¡¨
+        Hashtable<String, Doc> docs = new Hashtable<String, Doc>();
+
+        // åˆ›å»ºè¯­å¥å¯¹è±¡
+        statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        // æ‰§è¡ŒSQLè¯­å¥
+        String sql = "select * from doc_info "; // è·å–doc_infoæ‰€æœ‰å€¼
+
+        // å¤„ç†å¯¹è±¡
+        resultSet = statement.executeQuery(sql);
+        // è·å–æ•°æ®åº“ä¿¡æ¯
+        while (resultSet.next()) {
+
+            // éå†å­˜æ”¾
+            String FileID = resultSet.getString("FileID");
+            String Creator = resultSet.getString("Creator");
+            Timestamp timestamp = Timestamp.valueOf(resultSet.getString("Timestamp")); // stringè½¬Timestamp
+            String Description = resultSet.getString("Description");
+            String FileName = resultSet.getString("FileName");
+
+            docs.put(FileID, new Doc(FileID, Creator, timestamp, Description, FileName));
         }
-	    
-	    Enumeration<Doc> e  = docs.elements();
-		return e;
-	}
 
-	/**
-	 * TODO ²åÈëĞÂµÄµµ°¸
-	 * 
-	 * @param id
-	 * @param creator
-	 * @param timestamp
-	 * @param description
-	 * @param filename
-	 * @return boolean
-	 * @throws SQLException  
-	*/
-	public static boolean insertDoc(String id, String creator, Timestamp timestamp, String description, String filename) throws SQLException{
-		Doc doc;
-		
-		if (!connectToDB) {
-            throw new SQLException("Not Connected to Database");
-        }
-		
-		if (docs.containsKey(id))
-			return false;
-		else{
-			doc = new Doc(id,creator,timestamp,description,filename);
-			docs.put(id, doc);
-			try {
-				storageDoc();
-			} catch (IOException e) {
-				System.err.println("ÎÄµµ´æ´¢Òì³££º" + e.getMessage());
-			}
-			return true;
-		}
-	}
+        // è¿”å›æšä¸¾å®¹å™¨
+        Enumeration<Doc> e = docs.elements();
+        return e;
+    }
 
-	public static void storageDoc() throws IOException {
-		File DocStorageFile = new File(DCO_STORAGE_PATH);
-		if(!DocStorageFile.exists()){
-			DocStorageFile.createNewFile();
-		}
-		ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(DocStorageFile));
-		Enumeration<Doc> e = docs.elements();
-		List<Doc> DocList = new ArrayList<>();
-		while(e.hasMoreElements()) {
-			DocList.add(e.nextElement());
-		}
-		out.writeObject(DocList);
-		out.close();
-	}
+    public static AbstractUser searchUser(String name) throws SQLException {
 
-	/**
-	 * TODO:ĞòÁĞ»¯´æ´¢ÓÃ»§
-	 *
-	 * @return void
-	 * @throws IOException
-	 */
+        AbstractUser user = null;
 
-	public static void storageUser() throws IOException {
-		File userStorageFile=new File(USER_STORAGE_PATH);
-		if(!userStorageFile.exists()){
-			userStorageFile.createNewFile();
-		}
-		ObjectOutputStream out=new ObjectOutputStream(new FileOutputStream(userStorageFile));
-		Enumeration<AbstractUser> e = users.elements();
-		List<AbstractUser> userlist=new ArrayList<>();
-		while(e.hasMoreElements()) {
-			userlist.add(e.nextElement());
-		}
-		out.writeObject(userlist);
-		out.close();
-	}
-	
-	/**
-     * TODO °´ÓÃ»§ÃûËÑË÷ÓÃ»§£¬·µ»ØnullÊ±±íÃ÷Î´ÕÒµ½·ûºÏÌõ¼şµÄÓÃ»§
-     * 
-     * @param name ÓÃ»§Ãû 
-     * @return AbstractUser
-     * @throws SQLException 
-    */
-	public static AbstractUser searchUser(String name) throws SQLException{
-	    if (!connectToDB) {
-            throw new SQLException("Not Connected to Database");
+        if (!connectedToDatabase)
+            throw new SQLException("æœªè¿æ¥åˆ°æ•°æ®åº“ï¼");
+
+        // åˆ›å»ºè¯­å¥å¯¹è±¡
+        statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        // æ‰§è¡ŒSQLè¯­å¥
+        String sql = "select * from user_info where UserName='" + name + "'"; // è·å–UserNameåˆ—ä¸­å€¼ä¸ºnameçš„æ•°æ®,å˜é‡å‰åç”¨+å’Œ'"ã€"'è¿æ¥
+
+        // å¤„ç†å¯¹è±¡
+        resultSet = statement.executeQuery(sql);
+        // è·å–æ•°æ®åº“ä¿¡æ¯
+        if (resultSet.next()) {
+
+            String UserName = resultSet.getString("UserName");
+            String Password = resultSet.getString("Password");
+            String Role = resultSet.getString("Role");
+
+            user = new AbstractUser(UserName, Password, Role);
         }
-	    
-	    if (users.containsKey(name)) {
-			return users.get(name);
-		}
-		return null;
-	}
-	
-	/**
-     * TODO °´ÓÃ»§Ãû¡¢ÃÜÂëËÑË÷ÓÃ»§£¬·µ»ØnullÊ±±íÃ÷Î´ÕÒµ½·ûºÏÌõ¼şµÄÓÃ»§
-     * 
-     * @param name ÓÃ»§Ãû
-     * @param password  ÃÜÂë
-     * @return AbstractUser
-     * @throws SQLException 
-    */
-	public static AbstractUser searchUser(String name, String password) throws SQLException {
-	    if (!connectToDB) {
-            throw new SQLException("Not Connected to Database");
-        }
-	    
-	    if (users.containsKey(name)) {
-		    AbstractUser temp =users.get(name);
-			if ((temp.getPassword()).equals(password)) {
-				return temp;
-			}
-		}
-		return null;
-	}
-	
-	/**
-     * TODO È¡³öËùÓĞµÄÓÃ»§ 
-     * 
-     * @param 
-     * @return Enumeration<AbstractUser>
-     * @throws SQLException 
-    */
-	public static Enumeration<AbstractUser> listUser() throws SQLException{
-	    if (!connectToDB) {
-            throw new SQLException("Not Connected to Database");
-        }
-	    
-	    Enumeration<AbstractUser> e = users.elements();
-		return e;
-	}
-	
-	/**
-     * TODO ĞŞ¸ÄÓÃ»§ĞÅÏ¢
-     * 
-     * @param name ÓÃ»§Ãû
-     * @param password ÃÜÂë
-     * @param role ½ÇÉ«
-     * @return boolean
-     * @throws SQLException 
-    */
-	public static boolean updateUser(String name, String password, String role) throws SQLException{
-	    AbstractUser user;
-	    if (users.containsKey(name)) {
-            switch(ROLE_ENUM.valueOf(role.toLowerCase())) {
-                case administrator:
-                    user = new Administrator(name,password, role);
-                    break;
-                case operator:
-                    user = new Operator(name,password, role);
-                    break;
-                default:
-                    user = new Browser(name,password, role);    
+//ç”¨æ‰¾åˆ°çš„ä¿¡æ¯å»ºç«‹ä¸€ä¸ªuser
+        return user;
+    }
+
+    public static AbstractUser searchUser(String name, String password) throws SQLException {
+
+        AbstractUser user = null;
+
+        if (!connectedToDatabase)
+            throw new SQLException("æœªè¿æ¥åˆ°æ•°æ®åº“ï¼");
+
+        // åˆ›å»ºè¯­å¥å¯¹è±¡
+        statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        // æ‰§è¡ŒSQLè¯­å¥
+        String sql = "select * from user_info where UserName='" + name + "'and password='" + password + "'"; // è·å–UserNameåˆ—ä¸­å€¼ä¸ºnameçš„æ•°æ®,å˜é‡å‰åç”¨+å’Œ'"ã€"'è¿æ¥
+
+        // å¤„ç†å¯¹è±¡
+        resultSet = statement.executeQuery(sql);
+        // è·å–æ•°æ®åº“ä¿¡æ¯
+        if (resultSet.next()) {
+
+            String UserName = resultSet.getString("UserName");
+            String Password = resultSet.getString("Password");
+            String Role = resultSet.getString("Role");
+
+            user = new AbstractUser(UserName, Password, Role);
+
+            if (Password.equals(password)) {
+                return user;
+            } else {
+                return null;
             }
-            users.put(name, user);
-			try {
-				storageUser();
-			} catch (IOException e) {
-				System.err.println("ÓÃ»§´æ´¢Òì³££º" + e.getMessage());
-			}
-            return true;
-        }else {
-            return false;
         }
-	}
-	
-	/**
-     * TODO ²åÈëĞÂÓÃ»§
-     * 
-     * @param name ÓÃ»§Ãû
-     * @param password ÃÜÂë
-     * @param role ½ÇÉ«
-     * @return boolean
-     * @throws SQLException 
-    */
-	public static boolean insertUser(String name, String password, String role) throws SQLException{
-	    AbstractUser user;
-	    if (users.containsKey(name)) {
-            return false;
-        }else{
-            switch(ROLE_ENUM.valueOf(role.toLowerCase())) {
-                case administrator:
-                    user = new Administrator(name,password, role);
-                    break;
-                case operator:
-                    user = new Operator(name,password, role);
-                    break;
-                default:
-                    user = new Browser(name,password, role);    
-            }
-            users.put(name, user);
-			try {
-				storageUser();
-			} catch (IOException e) {
-				System.err.println("ÓÃ»§´æ´¢Òì³££º" + e.getMessage());
-			}
-            return true;
+
+        return null;
+    }
+
+    public static Enumeration<AbstractUser> getAllUser() throws SQLException {
+
+        if (!connectedToDatabase)
+            throw new SQLException("æœªè¿æ¥åˆ°æ•°æ®åº“ï¼");
+
+        // å»ºç«‹å“ˆå¸Œè¡¨
+        Hashtable<String, AbstractUser> users = new Hashtable<String, AbstractUser>();
+
+        // åˆ›å»ºè¯­å¥å¯¹è±¡
+        statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        // æ‰§è¡ŒSQLè¯­å¥
+        String sql = "select * from user_info "; // è·å–user_infoæ‰€æœ‰å€¼
+
+        // å¤„ç†å¯¹è±¡
+        resultSet = statement.executeQuery(sql);
+        // è·å–æ•°æ®åº“ä¿¡æ¯
+        while (resultSet.next()) {
+
+            // éå†å­˜æ”¾
+            String UserName = resultSet.getString("UserName");
+            String Password = resultSet.getString("Password");
+            String Role = resultSet.getString("Role");
+
+            users.put(UserName, new AbstractUser(UserName, Password, Role));
         }
-	}
-	
-	/**
-     * TODO É¾³ıÖ¸¶¨ÓÃ»§
-     * 
-     * @param name ÓÃ»§Ãû
-     * @return boolean
-     * @throws SQLException 
-    */
-	public static boolean deleteUser(String name) throws SQLException{
-		if (users.containsKey(name)){
-			users.remove(name);
-			return true;
-		}else {
-			return false;
-		}
-	}	
-    
-	/**
-     * TODO ¹Ø±ÕÊı¾İ¿âÁ¬½Ó
-     *   
-     * @param 
-     * @return void
-     * @throws  
-    */
-	public static void disconnectFromDataBase() {
-		if (connectToDB){
-			// close Statement and Connection            
-			try{
 
-			}finally{                                            
-				connectToDB = false;              
-			}                             
-		} 
-   }           
+        // è¿”å›æšä¸¾å®¹å™¨
+        Enumeration<AbstractUser> e = users.elements();
+        return e;
+    }
 
+    public static boolean updateUser(String name, String password, String role) throws SQLException {
+
+        if (!connectedToDatabase)
+            throw new SQLException("æœªè¿æ¥åˆ°æ•°æ®åº“ï¼");
+
+        // åˆ›å»ºè¯­å¥å¯¹è±¡
+        statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        // æ‰§è¡ŒSQLè¯­å¥
+        String sql = "UPDATE user_info SET Password='" + password + "',Role='" + role + "'WHERE UserName='" + name
+                + "'"; // æ›´æ”¹user_infoç›¸å…³æ•°æ®
+        // æ›´æ–°åˆ—è¡¨
+        statement.executeUpdate(sql);
+
+        return true;
+    }
+
+    public static boolean insertUser(String name, String password, String role) throws SQLException {
+
+        if (!connectedToDatabase)
+            throw new SQLException("æœªè¿æ¥åˆ°æ•°æ®åº“ï¼");
+
+        // åˆ›å»ºè¯­å¥å¯¹è±¡
+        statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        // æ‰§è¡ŒSQLè¯­å¥
+        String sql = "INSERT INTO user_info VALUES('" + name + "','" + password + "','" + role + "')";
+        // æ›´æ–°åˆ—è¡¨
+        statement.executeUpdate(sql);
+
+        return true;
+    }
+
+    public static boolean deleteUser(String name) throws SQLException {
+
+        if (!connectedToDatabase)
+            throw new SQLException("æœªè¿æ¥åˆ°æ•°æ®åº“ï¼");
+
+        // åˆ›å»ºè¯­å¥å¯¹è±¡
+        statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        // æ‰§è¡ŒSQLè¯­å¥
+        String sql = "DELETE FROM user_info WHERE UserName='" + name + "'";
+        // æ›´æ–°åˆ—è¡¨
+        statement.executeUpdate(sql);
+
+        return true;
+    }
 }

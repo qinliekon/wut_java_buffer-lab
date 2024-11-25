@@ -15,7 +15,7 @@ import java.util.Scanner;
  * @author gongjing
  * @date 2016/10/13
  */
-public  abstract  class  AbstractUser implements Serializable {
+public class AbstractUser implements Serializable {
 	private  String name;
 	private  String password;
 	private  String role;
@@ -107,7 +107,7 @@ public  abstract  class  AbstractUser implements Serializable {
 	 * @throws SQLException
 	 */
 	public  void  showFileList() throws  SQLException{
-		Enumeration<Doc> e= DataProcessing.listDoc();
+		Enumeration<Doc> e= DataProcessing.getAllDocs();
 		Doc doc;
 		while ( e.hasMoreElements() ){
 			doc=e.nextElement();
@@ -124,7 +124,7 @@ public  abstract  class  AbstractUser implements Serializable {
 	 * @return void
 	 * @throws
 	 */
-	public  abstract  void  showMenu();
+	public  void  showMenu() {}
 
 	/**
 	 * TODO ÍË³öÏµÍ³
@@ -162,7 +162,7 @@ public  abstract  class  AbstractUser implements Serializable {
 		this .role = role;
 	}
 
-	public abstract void func();
+	public void func() {}
 
 	public boolean addRole (String name, String password,String role) {
 		try {

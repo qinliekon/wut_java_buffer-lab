@@ -10,7 +10,7 @@ import java.util.Scanner;
 * */
 public class Main {
 
-    public static void main (String[] args) {
+    public static void main (String[] args) throws Exception{
 
         int mainMenuflag;
         AbstractUser abstractUser;
@@ -31,7 +31,7 @@ public class Main {
                         abstractUser.func();
                         break;
                     case 2:
-                        DataProcessing.disconnectFromDataBase();
+                        DataProcessing.disconnectFromDatabase();
                         System.out.println("欢迎再次使用");
                         System.exit(0);
                         break;
